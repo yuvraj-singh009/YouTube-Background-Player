@@ -46,44 +46,55 @@
 </head>
 <body>
     <h1>YouTube Background Player</h1>
-    <input id="videoURL" type="text" placeholder="Enter YouTube Video URL">
+    <input id="videoURL" type="text" placeholder="Enter YouTube Video or Playlist URL">
     <button onclick="playBackgroundAudio()">Play Audio</button>
     <button onclick="stopAudio()">Stop Playback</button>
     <iframe id="youtubePlayer" width="0" height="0" allow="autoplay"></iframe>
 
     <script>
-        let player;
+        function extractPlaylistOrVideoID(url) {
+            // Regex for detecting YouTube video or playlist
+            const videoRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+            const playlistRegex = /(?:list=)([a-zA-Z0-9_-]+)/;
 
-        function extractYouTubeID(url) {
-            const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-            const match = url.match(regex);
-            return match ? match[1] : null;
+            const videoMatch = url.match(videoRegex);
+            const playlistMatch = url.match(playlistRegex);
+
+            return {
+                videoID: videoMatch ? videoMatch[1] : null,
+                playlistID: playlistMatch ? playlistMatch[1] : null
+            };
         }
 
         function playBackgroundAudio() {
             const videoURL = document.getElementById('videoURL').value;
-            const videoID = extractYouTubeID(videoURL);
+            const { videoID, playlistID } = extractPlaylistOrVideoID(videoURL);
 
-            if (!videoID) {
-                alert("Please enter a valid YouTube URL.");
+            if (!videoID && !playlistID) {
+                alert("Please enter a valid YouTube video or playlist URL.");
                 return;
             }
 
-            // Initialize the YouTube Player API
-            if (!player) {
-                const iframe = document.getElementById('youtubePlayer');
-                iframe.src = `https://www.youtube.com/embed/${videoID}?autoplay=1&controls=0&loop=1&playlist=${videoID}&modestbranding=1`;
-                iframe.style.display = "block";
+            const iframe = document.getElementById('youtubePlayer');
+            let src;
+
+            if (playlistID) {
+                // Embed YouTube playlist
+                src = `https://www.youtube.com/embed?listType=playlist&list=${playlistID}&autoplay=1&controls=0&loop=1&modestbranding=1`;
             } else {
-                player.loadVideoById(videoID);
+                // Embed single video
+                src = `https://www.youtube.com/embed/${videoID}?autoplay=1&controls=0&loop=1&playlist=${videoID}&modestbranding=1`;
             }
 
+            iframe.src = src;
+            iframe.style.display = "block";
             alert("Playing YouTube audio in the background!");
         }
 
         function stopAudio() {
             const iframe = document.getElementById('youtubePlayer');
             iframe.src = ""; // Clear the iframe source to stop playback
+            iframe.style.display = "none";
             alert("Playback stopped.");
         }
     </script>
