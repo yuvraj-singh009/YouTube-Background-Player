@@ -42,6 +42,14 @@
         iframe {
             display: none; /* Keep the YouTube iframe hidden */
         }
+
+        select {
+            margin-top: 10px;
+            padding: 10px;
+            font-size: 16px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
@@ -50,10 +58,19 @@
     <button onclick="playBackgroundAudio()">Play Audio</button>
     <button onclick="stopAudio()">Stop Playback</button>
     <iframe id="youtubePlayer" width="0" height="0" allow="autoplay"></iframe>
+    
+    <label for="speedSelect">Choose speed: </label>
+    <select id="speedSelect" onchange="changeSpeed()">
+        <option value="1">Normal (1x)</option>
+        <option value="1.25">1.25x</option>
+        <option value="1.5">1.5x</option>
+        <option value="2">2x</option>
+    </select>
 
     <script>
+        let player;
+
         function extractPlaylistOrVideoID(url) {
-            // Regex for detecting YouTube video or playlist
             const videoRegex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
             const playlistRegex = /(?:list=)([a-zA-Z0-9_-]+)/;
 
@@ -64,6 +81,18 @@
                 videoID: videoMatch ? videoMatch[1] : null,
                 playlistID: playlistMatch ? playlistMatch[1] : null
             };
+        }
+
+        function onYouTubePlayerAPIReady() {
+            player = new YT.Player('youtubePlayer', {
+                events: {
+                    'onReady': onPlayerReady
+                }
+            });
+        }
+
+        function onPlayerReady(event) {
+            console.log("Player is ready!");
         }
 
         function playBackgroundAudio() {
@@ -79,10 +108,8 @@
             let src;
 
             if (playlistID) {
-                // Embed YouTube playlist
                 src = `https://www.youtube.com/embed?listType=playlist&list=${playlistID}&autoplay=1&controls=0&loop=1&modestbranding=1`;
             } else {
-                // Embed single video
                 src = `https://www.youtube.com/embed/${videoID}?autoplay=1&controls=0&loop=1&playlist=${videoID}&modestbranding=1`;
             }
 
@@ -93,10 +120,25 @@
 
         function stopAudio() {
             const iframe = document.getElementById('youtubePlayer');
-            iframe.src = ""; // Clear the iframe source to stop playback
+            iframe.src = "";
             iframe.style.display = "none";
             alert("Playback stopped.");
         }
+
+        function changeSpeed() {
+            const speed = parseFloat(document.getElementById('speedSelect').value);
+            if (player) {
+                player.setPlaybackRate(speed);
+            }
+        }
+
+        // Load YouTube Player API
+        (function() {
+            var tag = document.createElement('script');
+            tag.src = "https://www.youtube.com/iframe_api";
+            var firstScriptTag = document.getElementsByTagName('script')[0];
+            firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+        })();
     </script>
 </body>
 </html>
